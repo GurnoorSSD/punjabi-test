@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Punjabi Test for Kids</title>
+<style>
+    body {
+        font-family: 'Comic Sans MS', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #ffe0b2;
+    }
+
+    .container {
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        width: 400px;
+    }
+
+    h1 {
+        color: #ff6f00;
+        margin-bottom: 20px;
+    }
+
+    .question {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .options {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    button {
+        padding: 15px 25px;
+        font-size: 18px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        transform: scale(1.1);
+    }
+
+    .feedback {
+        margin-top: 20px;
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .score, .timer {
+        margin-top: 10px;
+        font-size: 20px;
+        color: #333;
+    }
+
+    .level-selection button {
+        padding: 10px 20px;
+        margin: 10px;
+        font-size: 18px;
+        border-radius: 10px;
+        cursor: pointer;
+        background-color: #34c759;
+        color: white;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Punjabi Test</h1>
+    <div class="level-selection" id="level-selection">
+        <p>ਸਤਰ ਚੁਣੋ:</p>
+        <button onclick="startTest('easy')">ਸੌਖਾ (Easy)</button>
+        <button onclick="startTest('medium')">ਦਰਮਿਆਨਾ (Medium)</button>
+        <button onclick="startTest('hard')">ਮੁਸ਼ਕਲ (Hard)</button>
+    </div>
+
+    <div id="test-section" style="display:none;">
+        <div class="timer" id="timer">Time: 10</div>
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="score" id="score">Score: 0</div>
+    </div>
+</div>
+
+<script>
+let score = 0;
+let questionCount = 0;
+let maxQuestions = 5;
+let level = 'easy';
+let timerInterval;
+
+const levelSettings = {
+    easy: { max: 5, time: 12, questions: [
+        {q:"ਇਹ ਕਿਹੜਾ ਅੱਖਰ ਹੈ? (A)", options:["ਅ","ਆ","ਇ","ਉ"], answer:"ਅ"},
+        {q:"ਸੇਬ ਨੂੰ ਪੰਜਾਬੀ ਵਿੱਚ ਕੀ ਕਹਿੰਦੇ ਹਨ?", options:["ਸੇਬ","ਸੰਤਰਾ","ਕੇਲਾ","ਅੰਗੂਰ"], answer:"ਸੇਬ"},
+        {q:"ਕਿਹੜਾ ਇੱਕ ਪਸ਼ੂ ਹੈ?", options:["ਕਿਤਾਬ","ਕੁੱਤਾ","ਘਰ","ਕੁਰਸੀ"], answer:"ਕੁੱਤਾ"},
+        {q:"ਨੀਲਾ ਰੰਗ ਕਿਹੜਾ ਹੈ?", options:["ਲਾਲ","ਹਰਾ","ਨੀਲਾ","ਪੀਲਾ"], answer:"ਨੀਲਾ"},
+        {q:"ਬਿੱਲੀ ਨਾਲ ਮਿਲਦਾ ਜੁਲਦਾ ਸ਼ਬਦ ਚੁਣੋ:", options:["ਘੋੜਾ","ਕੁੱਤਾ","ਮਿੱਟੀ","ਮੁੱਲੀ"], answer:"ਕੁੱਤਾ"}
+    ]},
+    medium: { max: 5, time: 10, questions: [
+        {q:"ਸੂਰਜ ਨੂੰ ਪੰਜਾਬੀ ਵਿੱਚ ਕੀ ਕਹਿੰਦੇ ਹਨ?", options:["ਸੂਰਜ","ਚੰਦ","ਤਾਰਾ","ਮਿੱਟੀ"], answer:"ਸੂਰਜ"},
+        {q:"ਕਿਹੜਾ ਫਲ ਪੀਲਾ ਹੁੰਦਾ ਹੈ?", options:["ਸੇਬ","ਕੇਲਾ","ਅੰਗੂਰ","ਸੰਤਰਾ"], answer:"ਕੇਲਾ"},
+        {q:"ਕਿਹੜਾ ਇੱਕ ਵਸਤੂ ਹੈ?", options:["ਕੁੱਤਾ","ਕੁਰਸੀ","ਘੋੜਾ","ਮੱਛੀ"], answer:"ਕੁਰਸੀ"},
+        {q:"ਹਰਾ ਰੰਗ ਚੁਣੋ:", options:["ਹਰਾ","ਨਾਰੰਗੀ","ਨੀਲਾ","ਸਲਟੀ"], answer:"ਹਰਾ"},
+        {q:"ਬਿੱਲੀ ਦੀ ਧੁਨ ਵਿੱਚ ਕੀ ਆਉਂਦਾ ਹੈ?", options:["ਮੀਆਂ","ਭੌਂ","ਚਿੜ","ਮਿਊ"], answer:"ਮੀਆਂ"}
+    ]},
+    hard: { max: 5, time: 8, questions: [
+        {q:"ਤਾਜਮਹਿਲ ਕਿਸ ਦੇਸ਼ ਵਿੱਚ ਹੈ?", options:["ਪਾਕਿਸਤਾਨ","ਭਾਰਤ","ਚੀਨ","ਮਿਸਰ"], answer:"ਭਾਰਤ"},
+        {q:"ਸੰਖਿਆ 5 ਨੂੰ ਪੰਜਾਬੀ ਵਿੱਚ ਕੀ ਕਹਿੰਦੇ ਹਨ?", options:["ਪੰਜ","ਸੱਤ","ਨੌਂ","ਦੋ"], answer:"ਪੰਜ"},
+        {q:"ਕਿਹੜਾ ਇੱਕ ਵਸਤੂ ਹੈ ਜੋ ਪਕਾਉਂਦੇ ਸਮੇਂ ਵਰਤੀਦੀ ਹੈ?", options:["ਚਮਚ","ਘੜੀ","ਗੱਡੀ","ਘਰ"], answer:"ਚਮਚ"},
+        {q:"ਸੜਕ 'ਤੇ ਸੁਰੱਖਿਆ ਲਈ ਕੀ ਵਰਤਦੇ ਹਨ?", options:["ਲਾਲ ਬੱਤੀ","ਹਰ ਬੱਤੀ","ਨੀਲੀ ਬੱਤੀ","ਸੋਨਾ"], answer:"ਲਾਲ ਬੱਤੀ"},
+        {q:"ਪੰਜਾਬੀ ਦੇਸ਼ ਕਿਹੜਾ ਹੈ?", options:["ਪਾਕਿਸਤਾਨ","ਭਾਰਤ","ਚੀਨ","ਮਿਸਰ"], answer:"ਭਾਰਤ"}
+    ]}
+};
+
+function startTest(selectedLevel) {
+    level = selectedLevel;
+    score = 0;
+    questionCount = 0;
+    maxQuestions = levelSettings[level].max;
+
+    document.getElementById('level-selection').style.display = 'none';
+    document.getElementById('test-section').style.display = 'block';
+    generateQuestion();
+}
+
+function generateQuestion() {
+    clearInterval(timerInterval);
+    if (questionCount >= maxQuestions) {
+        endTest();
+        return;
+    }
+
+    const q = levelSettings[level].questions[questionCount];
+    document.getElementById('question').textContent = q.q;
+
+    const optionsDiv = document.getElementById('options');
+    optionsDiv.innerHTML = '';
+    q.options.sort(() => Math.random() - 0.5).forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(opt, q.answer);
+        optionsDiv.appendChild(btn);
+    });
+
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('score').textContent = `Score: ${score}`;
+
+    startTimer(levelSettings[level].time, q.answer);
+}
+
+function checkAnswer(selected, correct) {
+    clearInterval(timerInterval);
+    const feedback = document.getElementById('feedback');
+    if (selected === correct) {
+        feedback.textContent = '🎉 ਸਹੀ ਜਵਾਬ!';
+        feedback.style.color = 'green';
+        score++;
+    } else {
+        feedback.textContent = `❌ ਸਹੀ ਜਵਾਬ: ${correct}`;
+        feedback.style.color = 'red';
+    }
+
+    document.getElementById('score').textContent = `Score: ${score}`;
+    questionCount++;
+
+    setTimeout(generateQuestion, 1500);
+}
+
+function startTimer(seconds, correctAnswer) {
+    let timeLeft = seconds;
+    const timerDiv = document.getElementById('timer');
+    timerDiv.textContent = `Time: ${timeLeft}`;
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timerDiv.textContent = `Time: ${timeLeft}`;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            checkAnswer(null, correctAnswer); // auto wrong
+        }
+    }, 1000);
+}
+
+function endTest() {
+    document.getElementById('question').textContent = '✅ ਟੈਸਟ ਖਤਮ ਹੋ ਗਿਆ!';
+    document.getElementById('options').innerHTML = '';
+    document.getElementById('feedback').textContent = `ਤੁਹਾਡਾ ਸਕੋਰ: ${score} / ${maxQuestions}`;
+    document.getElementById('timer').textContent = '';
+}
+</script>
+</body>
+</html>
